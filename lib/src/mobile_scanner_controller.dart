@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:developer' as developer;
 import 'dart:io';
 
 import 'package:flutter/cupertino.dart';
@@ -335,17 +336,28 @@ class MobileScannerController {
         break;
       case 'barcode':
         if (data == null) return;
-        final parsed = (data as List)
-            .map((value) => Barcode.fromNative(value as Map))
-            .toList();
-        _barcodesController.add(
-          BarcodeCapture(
-            barcodes: parsed,
-            image: event['image'] as Uint8List?,
-            width: event['width'] as double?,
-            height: event['height'] as double?,
-          ),
+        final parsed = <Barcode>[];
+        if (data is List) {
+          parsed.addAll(
+            data.map((value) => Barcode.fromNative(value as Map)).toList(),
+          );
+        } else if (data is Map) {
+          parsed.addAll([Barcode.fromNative(data)]);
+        } else {
+          developer.log('Error: no data', name: 'Mobile Scanner Controller');
+        }
+
+        final barcodeCapture = BarcodeCapture(
+          barcodes: parsed,
+          image: event['image'] as Uint8List?,
+          width: event['width'] as double?,
+          height: event['height'] as double?,
         );
+
+        _barcodesController.add(
+          barcodeCapture,
+        );
+
         break;
       case 'barcodeMac':
         _barcodesController.add(

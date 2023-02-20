@@ -214,22 +214,34 @@ public class SwiftMobileScannerPlugin: NSObject, FlutterPlugin {
     private func analyzeImage(_ call: FlutterMethodCall, _ result: @escaping FlutterResult) {
         let uiImage = UIImage(contentsOfFile: call.arguments as? String ?? "")
         
-        if (uiImage == nil) {
-            result(FlutterError(code: "MobileScanner",
-                                message: "No image found in analyzeImage!",
-                                details: nil))
-            return
-        }
-        mobileScanner.analyzeImage(image: uiImage!, position: AVCaptureDevice.Position.back, callback: { [self] barcodes, error in
-            if error == nil && barcodes != nil {
+         if (uiImage == nil) {
+        result(FlutterError(code: "MobileScanner",
+                            message: "No image found in analyzeImage!",
+                            details: nil))
+        return
+    }
+    mobileScanner.analyzeImage(image: uiImage!, position: AVCaptureDevice.Position.back, callback: { [self] barcodes, error in
+        if error == nil && barcodes != nil {
+            if barcodes!.count <= 0 {
+                let event: [String: Any?] = ["name": "error", "message": "no cade"]
+                barcodeHandler.publishEvent(event)
+                result(false)  
+            }else{
                 for barcode in barcodes! {
                     let event: [String: Any?] = ["name": "barcode", "data": barcode.data]
                     barcodeHandler.publishEvent(event)
+                    result(true)  
                 }
-            } else if error != nil {
-                barcodeHandler.publishEvent(["name": "error", "message": error?.localizedDescription])
             }
-        })
-        result(nil)
+            
+        } else if error != nil {
+            barcodeHandler.publishEvent(["name": "error", "message": error?.localizedDescription])
+            result(false) 
+        }else{
+            let event: [String: Any?] = ["name": "error", "message": "no cade"]
+            barcodeHandler.publishEvent(event)
+            result(false) 
+        }
+    })
     }
 }
